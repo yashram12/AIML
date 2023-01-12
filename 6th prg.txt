@@ -1,0 +1,61 @@
+import numpy as np 
+import pandas as pd 
+p=pd.read_csv("tennis.csv")
+p.replace("?",np.nan,inplace=True)
+print(len(p.columns),"columns after droping NA:",len(p.dropna(axis=1).columns))
+p.dropna(axis=1,inplace=True)
+t="outlook"
+f=p.columns[p.columns!=t]
+classes=p[t].unique()
+test=p.sample(frac=0.3)
+p=p.drop(test.index)
+prob={}
+probc1={}
+for X in classes:
+    pc1=p[p[t]==X][f]
+    clsp={}
+    tot=len(pc1)
+    for col in p.columns:
+        colp={}
+        for val,cnt in p[col].value_counts().iteritems():
+            pr=tot/cnt
+            colp[val]=pr
+        clsp[col]=colp
+    prob[X]=clsp
+    probc1[X]=len(pc1)/len(p)
+    
+def probabs(X):
+    if not isinstance(X,pd.Series):
+        raise IOError("arg must be series type")
+    probab={}
+    for c1 in classes:
+        pr=probc1[c1]
+        for col,val in X.iteritems():
+            try:
+                pr*=prob[c1][col][val]
+            except KeyError():
+                pr=0
+        probab[c1]=pr
+    return probab
+    
+def classify(X):
+    probab=probabs(X)
+    mx=0
+    mxc1=""
+    for c1,pr in probab.items():
+        if pr>mx:
+            mx=pr
+            mxc1=c1
+    return mxc1
+
+b=[]
+for i in p.index:
+    b.append(classify(p.loc[i,f])==p.loc[i,t])
+print(sum(b),"correction of:",len(p))
+print("accuracy:",sum(b)/len(p))
+
+b=[]
+for i in test.index:
+    b.append(classify(test.loc[i,f])==test.loc[i,t])
+print(sum(b),"correction of:",len(test))
+print("accuracy:",sum(b)/len(test))
