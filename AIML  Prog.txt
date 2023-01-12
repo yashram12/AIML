@@ -1,0 +1,402 @@
+
+--------1 p--------
+from collections import deque
+class Graph:
+    def __init__(self,adjoc_lis):
+        self.adjoc_lis=adjoc_lis
+    def get_Neighbours(self,n):
+        return self.adjoc_lis[n]
+    def h(self,n):
+        H={
+            'A':1,
+            'B':1,
+            'C':1,
+            'D':0}
+        return H[n]
+    def a_star(self,start,stop):
+        open_lst=set([start])
+        cls_lst=set([])
+        dint={}
+        dint[start]=0
+        prenode={}
+        prenode[start]=start
+        while len(open_lst)>0:
+            n=None
+            for v in open_lst:
+                
+                if n==None or dint[v]+self.h(v)<dint[n]+self.h(n):
+                    n=v
+            if n==None:
+                print("path does not exist")
+                return None
+            if n==stop:
+                recons_path=[]
+                while prenode[n]!=n:
+                    recons_path.append(n)
+                    n=prenode[n]
+                recons_path.append(start)
+                recons_path.reverse()
+                print("path found: {} ".format(recons_path))
+                return recons_path
+            for (m,weight)in self.get_Neighbours(n):
+                if m not in open_lst and m not in cls_lst:
+                    open_lst.add(m)
+                    prenode[m]=n
+                    dint[m]=dint[n]+weight
+                else:
+                    if dint[m]>dint[n]+weight:
+                        dint[m]=dint[n]+weight
+                        prenode[m]=n
+                        if m in cls_lst:
+                            cls_lst.remove(m)
+                            open_lst.add(m)
+            open_lst.remove(n)
+            cls_lst.add(n)
+        print("path does not exist")
+        return None           
+adjoc_lis = {'A':[('B',1),('C',3),('D',7)],'B':[('D',5)],'C':[('D',12)]}
+graph1=Graph(adjoc_lis)
+graph1.a_star('A', 'D')
+                
+            
+------- 3 p---------------
+
+import csv
+with open("ENJOYSPORT.CSV") as f:
+    csv_file=csv.reader(f)
+    data=list(csv_file)
+    print("data:",data)
+    s=data[0][:-1]
+    print("s:",s)
+    g=[['?' for i in range(len(s))]for j in range(len(s))]
+    for i in data:
+        if i[-1]=='yes':
+            for j in range(len(s)):
+                if i[j]!=s[j]:
+                    s[j]='?'
+                    g[j][j]='?'
+        else:
+            if i[-1]=='no':
+                for j in range(len(s)):
+                    if i[j]!=s[j]:
+                        g[j][j]=s[j]
+                    else:
+                        g[j][j]='?'
+        print("the steps in candidate algorithm",data.index(i)+1)
+        print(s,"\n")
+        print(g,"\n")
+    
+gh=[]
+for i in g:
+    for j in i:
+        if j!='?':
+            gh.append(i)
+            break
+print("the final specificatin hypothises",s)
+print("the final general hypothises:",gh)
+
+
+-------4 program--------
+
+
+import numpy as np 
+import pandas as pd
+eps=np.finfo(float).eps
+print("eps",eps) 
+from numpy import log2 as log
+
+
+
+outlook='sunny,sunny,overcast,rain,rain,rain,overcast,sunny,sunny,rain,sunny,overcast,overcast,rain'.split(',')
+temp='hot,hot,hot,mild,cool,cool,cool,mild,cool,mild,mild,mild,hot,mild'.split(',')
+hum='high,high,high,high,normal,normal,normal,high,normal,normal,normal,high,normal,high'.split(',')
+wind='weak,strong,weak,weak,weak,strong,strong,weak,weak,weak,strong,strong,weak,strong'.split(',')
+play='no,no,yes,yes,yes,no,yes,no,yes,yes,yes,yes,yes,no'.split(',')
+
+
+
+
+dataset={'outlook':outlook,'temp':temp,'hum':hum,'wind':wind,'play':play}
+df=pd.DataFrame(dataset,columns=['outlook','temp','hum','wind','play'])
+print('df:',df)
+
+
+def entropy(df):
+    classes=df.keys()[-1]
+    entropy=0
+    value=df[classes].unique()
+    for values in value:
+        fraction = df[classes].value_counts()[values]/len(df[classes])
+        entropy += -fraction*np.log2(fraction)
+    return entropy
+
+def find_entropy(df,attribute):
+    classes=df.keys()[-1]
+    target_value=df[classes].unique()
+    veriable=df[attribute].unique()
+    entropy2=0
+    for variables in veriable:
+        entropy=0
+        den=0
+        for target_values in target_value:
+            num=len(df[attribute][df[attribute]==variables][df[classes]==target_values])
+            den=len(df[attribute][df[attribute]==variables])
+            fraction=num/(den+eps)
+            entropy += -fraction*log(fraction+eps)
+        fraction2 = den/len(df)
+        entropy2 += -fraction2*entropy
+    return abs(entropy2)
+
+def win(df):
+    ig=[]
+    for key in df.keys()[:-1]:
+        ig.append(entropy(df)-find_entropy(df,key))
+    return df.keys()[:-1][np.argmax(ig)]
+
+def sastable(df,node,value):
+    return df[df[node]==value].reset_index(drop=True)
+
+def buildtree(df,tree=None):
+    node=win(df)
+    attValue=np.unique(df[node])
+    if tree is None:
+        tree={}
+        tree[node]={}
+    for value in attValue:
+        stable=sastable(df,node,value)
+        clValue,counts=np.unique(stable['play'],return_counts=True)
+        if len(counts)==1:
+            tree[node][value]=clValue[0]
+        else:
+            tree[node][value]=buildtree(stable)
+    return tree
+
+t=buildtree(df)
+import pprint
+
+pprint.pprint(t)
+
+ ------5 p---------
+
+
+
+import numpy as np
+X=np.array((1,0,1))
+y=np.array(1)
+def sigmoid(x):
+    return 1/(1+np.exp(-x))
+
+epoch=5
+lr=0.9
+inl=3
+hl=2
+ol=1
+
+wh=np.random.uniform(size=(inl,hl))
+print("weight of input layer:",wh)
+bh=np.random.uniform(size=(1,hl))
+print("bias factor of input layer:",bh)
+wout=np.random.uniform(size=(hl,ol))
+print("weight of output layer:",wout)
+bout=np.random.uniform(size=(1,ol))
+print("bias factor of output layer:",bout)
+for i in range(epoch):
+    hinp=np.dot(X,wh)+bh
+    hl_a=sigmoid(hinp)
+    outinp=np.dot(hl_a,wout)+bout
+    output=sigmoid(outinp)
+    EO1=y-output
+    print("EO1:",EO1)
+    EO=(y-output)*(1-output)*output
+    print("EO output:",EO)
+    EH=outinp*(1-outinp)*EO.dot(wout.T)
+    print("EH output:",EH)
+    wout+=EO*outinp*(wout)*lr
+    print("the new weight of new input layer:",wout)
+    wh+=EH*X.dot(wh)*lr
+    print("the new weight of new output layer:",wh)
+    
+print("input:",str(X))
+print("output:",str(y))
+print("actual output:",output)
+
+
+------6 p--------
+
+
+import numpy as np 
+import pandas as pd 
+p=pd.read_csv("tennis.csv")
+p.replace("?",np.nan,inplace=True)
+print(len(p.columns),"columns after droping NA:",len(p.dropna(axis=1).columns))
+p.dropna(axis=1,inplace=True)
+t="outlook"
+f=p.columns[p.columns!=t]
+classes=p[t].unique()
+test=p.sample(frac=0.3)
+p=p.drop(test.index)
+prob={}
+probc1={}
+for X in classes:
+    pc1=p[p[t]==X][f]
+    clsp={}
+    tot=len(pc1)
+    for col in p.columns:
+        colp={}
+        for val,cnt in p[col].value_counts().iteritems():
+            pr=tot/cnt
+            colp[val]=pr
+        clsp[col]=colp
+    prob[X]=clsp
+    probc1[X]=len(pc1)/len(p)
+    
+def probabs(X):
+    if not isinstance(X,pd.Series):
+        raise IOError("arg must be series type")
+    probab={}
+    for c1 in classes:
+        pr=probc1[c1]
+        for col,val in X.iteritems():
+            try:
+                pr*=prob[c1][col][val]
+            except KeyError():
+                pr=0
+        probab[c1]=pr
+    return probab
+    
+def classify(X):
+    probab=probabs(X)
+    mx=0
+    mxc1=""
+    for c1,pr in probab.items():
+        if pr>mx:
+            mx=pr
+            mxc1=c1
+    return mxc1
+
+b=[]
+for i in p.index:
+    b.append(classify(p.loc[i,f])==p.loc[i,t])
+print(sum(b),"correction of:",len(p))
+print("accuracy:",sum(b)/len(p))
+
+b=[]
+for i in test.index:
+    b.append(classify(test.loc[i,f])==test.loc[i,t])
+print(sum(b),"correction of:",len(test))
+print("accuracy:",sum(b)/len(test))
+        
+
+
+------7 p------
+
+
+import numpy as np
+import pandas as pd 
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import KMeans
+from matplotlib import pyplot as plt
+data=pd.read_csv("ex.csv")
+f1=data['V1'].values
+f2=data['V2'].values
+X=np.array(list(zip(f1,f2)))
+print("X:",X)
+print("the graph of all dataset")
+plt.scatter(f1,f2,c='black')
+kmeans=KMeans(2)
+lable=kmeans.fit(X).predict(X)
+print("the lables of the kmeans:",lable)
+print("the graph of the kmeans")
+plt.scatter(f1,f2,c=lable)
+plt.show()
+centroids=kmeans.cluster_centers_
+print("centroids:",centroids)
+plt.scatter(centroids[:,0], centroids[:,1],marker="*",c='red')
+plt.show()
+gmm=GaussianMixture(2)
+lable=gmm.fit(X).predict(X)
+print("the lables of the gmm:",lable)
+print("the graph of the gmm")
+plt.scatter(f1,f2,c=lable)
+plt.show()
+
+
+
+----8 p----
+
+
+from sklearn.datasets import load_iris
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+import numpy as np
+data_iris=load_iris()
+targets=data_iris.target_names
+print("class:number")
+for i in range(len(targets)):
+    print(targets[i],":",i)
+X_train,X_test,y_train,y_test=train_test_split(data_iris["data"],data_iris["target"])
+kn=KNeighborsClassifier(1)
+kn.fit(X_train, y_train)
+for i in range(len(X_test)):
+    new_x=np.array([X_test[i]])
+predition=kn.predict(new_x)
+print("actual:[{0}]   [{1}],predition:{2}    {3}".format(y_test[i],targets[y_test[i]],predition,targets[predition]))
+print("A:",kn.score(X_test, y_test))
+  
+
+-----9 p------   
+
+
+import operator
+import pandas as pd
+import matplotlib
+from numpy import *
+from numpy.linalg import *
+from os import listdir
+import matplotlib.pyplot as plt
+def ker(point,xmat,k):
+    m,n=shape(xmat)
+    weight=mat(eye(m))
+    for j in range(m):
+        diff=point-X[j]
+        weight[j,j]=exp(diff*diff.T/(-2.0*k**2))
+    return weight
+
+def lw(point,xmat,ymat,k):
+    wie=ker(point,xmat,k)
+    w=(X.T*(wie*X)).I*(X.T*(wie*ymat.T))
+    return w
+def lwr(xmat,ymat,k):
+    m,n=shape(xmat)
+    ypred=zeros(m)
+    for i in range(m):
+        ypred[i]=xmat[i]*lw(xmat[i],xmat,ymat,k)
+    return ypred
+
+data=pd.read_csv("tips.csv")
+bill=array(data.total_bill)
+tip=array(data.tip)
+mbill=mat(bill)
+mtip=mat(tip)
+m=shape(mbill)[1]
+one=mat(ones(m))
+X=hstack((one.T,mbill.T))
+ypred=lwr(X,mtip,10)
+IndexSort=X[:,1].argsort(0)
+xsort=X[IndexSort][:,0]
+fig=plt.figure()
+ax=fig.add_subplot(1,1,1)
+ax.scatter(bill,tip,color='green')
+ax.plot(xsort[:,1],ypred[IndexSort],color='red',linewidth=5)
+plt.xlabel("total_bill")
+plt.ylabel("tips")
+plt.show();       
+                            
+                            
+                    
+                    
+                
+        
+                
+        
+        
